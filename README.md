@@ -1,4 +1,4 @@
-# ImageToAudio: Bilder mit Sound übertragen
+# Image-to-Sound: Bilder mit Sound übertragen
 
 Eine Python-Anwendung, die es ermöglicht, Bilder in Audiosignale umzuwandeln und mithilfe von **Frequency Shift Keying (FSK)** zu übertragen. Die Audiosignale können über Lautsprecher abgespielt und mit einem Mikrofon empfangen werden, um das Bild auf der Empfängerseite zu rekonstruieren.
 
@@ -13,4 +13,9 @@ Eine Python-Anwendung, die es ermöglicht, Bilder in Audiosignale umzuwandeln un
 
 2. **Audiosignal zu Bild:**
    - Ein aufgenommenes Audiosignal wird analysiert.
-   - Die kodierten Binärdaten werden dekodiert und das Bild daraus
+   - Die kodierten Binärdaten werden dekodiert und das Bild daraus rekonstruiert.
+
+3. **Startmarker:**
+   - Ein eindeutiger Startmarker wird verwendet, um den Beginn der Bildübertragung im Audiosignal zu erkennen.
+
+---
