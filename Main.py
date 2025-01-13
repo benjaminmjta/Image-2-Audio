@@ -1,9 +1,8 @@
 import math
-import base64 as b64
 import numpy as np
 import wave
 from PIL import Image
-from scipy.io.wavfile import write
+
 
 # converts image (black white) to binary string
 def img2bit(input_image):
@@ -26,10 +25,8 @@ def img2bit(input_image):
     bitstring = height_bits + width_bits + pixels_bits
     return bitstring
 
-
-
-def bit2audio(bitstring, encoded_audio, sample_rate = 44100, bitgroup_duration = 0.01):
-    frequencies = [1000 + i * 1000 for i in range(16)]
+def bit2audio(bitstring, encoded_audio, sample_rate, bitgroup_duration, freq_rate, startmarker_duration, startmarker_frequency):
+    frequencies = [500 + i * freq_rate for i in range(16)]
 
     # check if bitstring is groupable with group size of 4
     padding_length = (4 - (len(bitstring) % 4)) % 4  # number of padding bits
@@ -42,6 +39,14 @@ def bit2audio(bitstring, encoded_audio, sample_rate = 44100, bitgroup_duration =
     samples_per_group = bitgroup_duration * sample_rate
     signal = []
 
+    # startmaker
+    marker_samples = startmarker_duration * sample_rate
+    marker_frequency = startmarker_frequency
+    for i in range(int(marker_samples)):
+        signal_value = amplitude * math.sin(2 * math.pi * marker_frequency * i / sample_rate)
+        signal.append(int(signal_value))
+
+    # symbols
     for symbol in symbols:
         frequency = frequencies[symbol]
         for i in range(int(samples_per_group)):
@@ -58,9 +63,29 @@ def bit2audio(bitstring, encoded_audio, sample_rate = 44100, bitgroup_duration =
 
         print(f"image successfully converted via FSK into: {encoded_audio}")
 
+def find_startmarker(signal, sample_rate, startmarker_frequency, startmarker_duration):
+    window_samples = int(startmarker_duration * sample_rate)
 
-def audio2bit(encoded_audio, bitgroup_duration = 0.01, sample_rate = 44100):
-    frequencies = [1000 + i * 1000 for i in range(16)]
+    # iterate through signal to find startmarker
+    for i in range(0, len(signal) - window_samples, window_samples // 2):
+        segment = signal[i:i + window_samples]
+
+        # fourier transform
+        fft_result = np.fft.fft(segment)
+        freqs = np.fft.fftfreq(len(segment), 1 / sample_rate)
+        magnitude = np.abs(fft_result)
+
+        # get dominant freq
+        dominant_freq = abs(freqs[np.argmax(magnitude)])
+
+        # check if dominant freq = startmarker
+        if abs(dominant_freq - startmarker_frequency) <= 10:
+            return i + window_samples  # startindex
+
+    return -1  # no startmarker found
+
+def audio2bit(encoded_audio, bitgroup_duration, sample_rate, freq_rate, startmarker_frequency, startmarker_duration):
+    frequencies = [500 + i * freq_rate for i in range(16)]
 
     with wave.open(encoded_audio, 'r') as wav_file:
         n_channels = wav_file.getnchannels()
@@ -76,12 +101,18 @@ def audio2bit(encoded_audio, bitgroup_duration = 0.01, sample_rate = 44100):
 
     signal = np.frombuffer(audio_data, dtype=np.int16)
 
+    start_index = find_startmarker(signal, sample_rate, startmarker_frequency, startmarker_duration)
+    if start_index == -1:
+        raise ValueError(
+            "Startmarker nicht gefunden. Bitstring kann nicht decodiert werden."
+        )
+
     samples_per_symbol = int(sample_rate * bitgroup_duration)
 
     bitstring = ""
 
     # decode every symbol
-    for i in range(0, len(signal), samples_per_symbol):
+    for i in range(start_index, len(signal), samples_per_symbol):
         # get current symbol
         segment = signal[i:i+samples_per_symbol]
 
@@ -91,18 +122,16 @@ def audio2bit(encoded_audio, bitgroup_duration = 0.01, sample_rate = 44100):
 
         # get dominating freq
         magnitude = np.abs(fft_result)
-        dominant_freq = freqs[np.argmax(magnitude)]
+        dominant_freq = abs(freqs[np.argmax(magnitude)])
 
         # freq to symbol
-        if abs(dominant_freq) in frequencies:
-            bitstring += format(int(abs(dominant_freq)/1000)-1, '04b')
+        if dominant_freq in frequencies:
+            bitstring += format(int(dominant_freq/freq_rate) - int(frequencies[0]/freq_rate), '04b')
         else:
             print(f"unknown frequency: {dominant_freq}Hz, skipped.")
 
     return bitstring
 
-
-# converts bitstring to image with pillow
 def bit2img(bitstring, output_image):
     ## check min length
     if len(bitstring) < 32:
@@ -128,13 +157,18 @@ def bit2img(bitstring, output_image):
     print(f"image successfully encoded to {output_image}")
 
 
+input_image = 'skibidi_gembris_64x64.png'
+output_image = 'image_received.png'
+#encoded_audio = 'image_encoded.wav'
+encoded_audio = 'gembris_64x64_recorded.wav'
 
-input_image = 'skibidi_gembris_lowres.png'
-output_image = 'skibidy_gembris_lowres_received.png'
-encoded_audio = 'image_encoded.wav'
+sample_rate = 44100
+bitgroup_duration = 0.01
+freq_rate = 100
+startmarker_frequency = 2200
+startmarker_duration = 0.3
+
 bits = img2bit(input_image)
-print(bits)
-# bit2audio(bits, encoded_audio)
-new_bits = audio2bit(encoded_audio)
-print(new_bits)
+bit2audio(bits, encoded_audio, sample_rate, bitgroup_duration, freq_rate, startmarker_duration, startmarker_frequency)
+new_bits = audio2bit(encoded_audio, bitgroup_duration, sample_rate, freq_rate, startmarker_frequency, startmarker_duration)
 bit2img(new_bits, output_image)
