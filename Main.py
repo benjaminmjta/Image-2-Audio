@@ -2,7 +2,11 @@ import math
 import numpy as np
 import wave
 from PIL import Image
-import plotly.graph_objects as go
+import tkinter as tk
+from tkinter.filedialog import askopenfilename
+from tkinter import scrolledtext
+from tkinter import ttk
+import threading
 
 def img2bit(input_image, color_depth):
     '''
@@ -42,6 +46,7 @@ def img2bit(input_image, color_depth):
     ## create final string
     bitstring = height_bits + width_bits + color_depth_bits + pixels_bits
     return bitstring
+
 
 def bit2audio(bitstring, encoded_audio, sample_rate, bitgroup_duration, freq_rate, startmarker_duration, startmarker_frequency):
     '''
@@ -90,7 +95,8 @@ def bit2audio(bitstring, encoded_audio, sample_rate, bitgroup_duration, freq_rat
         for sample in signal:
             wf.writeframes(sample.to_bytes(2, 'little', signed=True))
 
-        print(f"image successfully encoded into: {encoded_audio}")
+        print(f"image successfully encoded to ./{encoded_audio}")
+
 
 def find_startmarker(signal, sample_rate, startmarker_frequency, startmarker_duration):
     '''
@@ -121,6 +127,7 @@ def find_startmarker(signal, sample_rate, startmarker_frequency, startmarker_dur
 
     return -1  # no startmarker found
 
+
 def audio2bit(encoded_audio, symbol_duration, sample_rate, freq_rate, startmarker_frequency, startmarker_duration):
     '''
     decodes audio (.wav) to bitstring
@@ -149,20 +156,6 @@ def audio2bit(encoded_audio, symbol_duration, sample_rate, freq_rate, startmarke
 
     signal = np.frombuffer(audio_data, dtype=np.int16)
 
-    '''
-    time = np.arange(0, len(signal)) / framerate
-    # Plotly-Graph erstellen
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=time, y=signal, mode='lines', name='Signal'))
-    fig.update_layout(
-        title="Audio Signal (jede 100. Amplitude)",
-        xaxis_title="Zeit (s)",
-        yaxis_title="Amplitude",
-        template="plotly_white",
-    )
-    fig.show()
-    '''
-
     start_index = find_startmarker(signal, sample_rate, startmarker_frequency, startmarker_duration)
     if start_index == -1:
         raise ValueError(
@@ -179,31 +172,18 @@ def audio2bit(encoded_audio, symbol_duration, sample_rate, freq_rate, startmarke
         segment = signal[i:i+samples_per_symbol]
 
         '''
-        # discrete fourier transform O(n^2)
-        # do fourier transform to get frequency
-        dft_result = dft(segment)
-        magnitude_dft = np.abs(dft_result)[:samples_per_symbol // 2] # nur positive frequenzen
-        freqs_dft = np.linspace(0, sample_rate / 2, samples_per_symbol // 2)  # frequency axis for positiv freqs
-        # get dominant frequencies
-        dominant_freq_index = np.argmax(magnitude_dft)
-        dominant_frequency = freqs_dft[dominant_freq_index]
-        dominant_frequencies.append(dominant_frequency)
+        # fourier transform manual implementation
+        # 1 -> fft, 0 -> dft
+        ft_version = 1
+        dominant_frequency = get_frequency(segment, sample_rate, ft_version)
+        print(f"dominant frequency manual: {dominant_frequency}Hz")
+        dominant_frequency = min(frequencies, key=lambda x: abs(x - dominant_frequency))
+        print(f"rounded dominant frequency manual: {dominant_frequency}Hz")
         '''
 
         '''
-        # fast fourier transform O(n log n)
-        # do fourier transform to get frequency
-        fft_result = fft(segment)
-        magnitude_fft = np.abs(fft_result)[:samples_per_symbol // 2] # nur positive frequenzen
-        freqs_fft = np.linspace(0, sample_rate / 2, samples_per_symbol // 2)  # frequency axis for positiv freqs
-        # get dominant frequencies
-        dominant_freq_index = np.argmax(magnitude_fft)
-        dominant_frequency = freqs_fft[dominant_freq_index]
-        print(f"dominant frequency: {dominant_frequency}Hz")
-        # auf nächt passenden wert runden -> fehlerbehebung
-        dominant_frequency = min(frequencies, key=lambda x: abs(x - dominant_frequency))
-        print(f"rounded dominant frequency: {dominant_frequency}Hz")
         if dominant_frequency == frequencies[16]:
+        
             continue
 
         if dominant_frequency in frequencies:
@@ -212,10 +192,11 @@ def audio2bit(encoded_audio, symbol_duration, sample_rate, freq_rate, startmarke
             print(f"unknown frequency: {dominant_frequency}Hz, skipped.")
         '''
 
-        #'''
+
         # fast fourier via np library
         # fourier transform to get current frequency
         fft_result = np.fft.fft(segment)
+
         freqs = np.fft.fftfreq(len(segment), 1 / sample_rate)
 
         # get dominating freq
@@ -227,9 +208,9 @@ def audio2bit(encoded_audio, symbol_duration, sample_rate, freq_rate, startmarke
             bitstring += format(int(dominant_freq/freq_rate) - int(frequencies[0]/freq_rate), '04b')
         else:
             print(f"unknown frequency: {dominant_freq}Hz, skipped.")
-        #'''
 
     return bitstring
+
 
 def bit2img(bitstring, output_image):
     '''
@@ -269,7 +250,8 @@ def bit2img(bitstring, output_image):
 
     # Save the new image
     image.save(output_image)
-    print(f"Image successfully decoded to {output_image}")
+    print(f"Image successfully decoded to ./{output_image}")
+
 
 def dft(signal):
     '''
@@ -289,50 +271,67 @@ def dft(signal):
         result.append(complex(r, i))
     return np.array(result)
 
+
 def fft(signal):
+    '''
+    fast fourier transform on signal
+    :param signal: dataarray of signal values
+    :return: dataarray of complex values
+    '''
+
     n = len(signal)
-    if n == 1:
+
+    if n <= 1:
         return signal
-    else:
-        even = fft(signal[::2])
-        odd = fft(signal[1::2])
-        c = [0] * n
-        for k in range(n // 2):
-            exp = np.exp(-2j * np.pi * k / n)
-            c[k] = even[k] + odd[k] * exp
-            c[k + n // 2] = even[k] - odd[k] * exp
-        return c
 
-def fft_test(signal):
-    '''
-    calculate fast fourier transform of signal
-    :param signal: array of signal values
-    :return: array of complex values
-    '''
-    N = len(signal)
-    if not np.log2(N).is_integer():
-        next_power_of_2 = 2 ** int(np.ceil(np.log2(N)))
-        padded_signal = np.zeros(next_power_of_2, dtype=complex)
-        padded_signal[:N] = signal
-        signal = padded_signal
-    N = len(signal)
-    if N <= 1:
-        return np.array(signal, dtype=complex)
-    even = fft(signal[0::2])
+    even = fft(signal[::2])
     odd = fft(signal[1::2])
-    T = np.exp(-2j * np.pi * np.arange(N) / N)
-    return np.concatenate([even + T[:N // 2] * odd,
-                           even + T[N // 2:] * odd])
+
+    T = [math.e**(-2j * math.pi * k/n) * odd[k] for k in range(n//2)]
+    return [even[k] + T[k] for k in range(n//2)] + \
+           [even[k] - T[k] for k in range(n // 2)]
 
 
+def get_frequency(signal, sample_rate, ft_version):
+    '''
+    calculates the dominant frequency of a signal
+    :param signal: dataarray of signal values
+    :param sample_rate: sample rate of the signal in Hz
+    :param ft_version: use fft(1) or dft(0) type:bool
+    :return: dominant frequency in Hz
+    '''
 
+    n = len(signal)
 
-input_image = 'skibidi_gembris_64x64.png'
+    if n%2 != 0:
+        new_length = 2 ** int(math.floor(math.log2(n)))
+        signal = signal[:new_length]
+
+    n = len(signal)
+
+    if ft_version == 0:
+        fft_result = dft(signal)
+    else:
+        fft_result = fft(signal)
+
+    amps = [abs(x) for x in fft_result]
+    freqs = [(i * sample_rate) / n for i in range(n)]
+
+    freqs_pos = freqs[:n//2]
+    amps_pos = amps[:n//2]
+
+    max_index = amps_pos.index(max(amps_pos))
+    dominant_frequency = abs(freqs_pos[max_index])
+
+    return dominant_frequency
+
+'''
+input_image = '64x64.png'
 output_image = 'image_received.png'
 encoded_audio = 'image_encoded.wav'
-#encoded_audio = 'gembris_64x64_recorded.wav'
+#encoded_audio = '64x64_recorded.wav'
 
-color_depth = 8 # depth of color information min: 2 max: 255
+color_depth = 2 # depth of color information min: 2 max: 255
 
 sample_rate = 44100
 symbol_duration = 0.01
@@ -344,3 +343,110 @@ bits = img2bit(input_image, color_depth)
 bit2audio(bits, encoded_audio, sample_rate, symbol_duration, freq_rate, startmarker_duration, startmarker_frequency)
 new_bits = audio2bit(encoded_audio, symbol_duration, sample_rate, freq_rate, startmarker_frequency, startmarker_duration)
 bit2img(new_bits, output_image)
+
+'''
+
+class ImageAudioConverterApp(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Image to Audio Converter")
+        self.geometry("700x600")
+        self.configure(bg="white")
+
+        self.create_widgets()
+
+    def create_widgets(self):
+        # Encode Section
+        self.encode_frame = ttk.LabelFrame(self, text="Encode Image to Audio", padding=10)
+        self.encode_frame.pack(fill="x", padx=10, pady=10)
+
+        self.input_image_label = ttk.Label(self.encode_frame, text="Select Image:")
+        self.input_image_label.pack(anchor="w")
+
+        self.input_image_path = ttk.Entry(self.encode_frame, width=50)
+        self.input_image_path.pack(side="left", padx=5, pady=5)
+
+        self.browse_image_button = ttk.Button(self.encode_frame, text="Browse", command=self.browse_image)
+        self.browse_image_button.pack(side="left", padx=5)
+
+        self.encode_button = ttk.Button(self.encode_frame, text="Encode", command=self.encode_to_audio)
+        self.encode_button.pack(side="left", padx=5)
+
+        # Decode Section
+        self.decode_frame = ttk.LabelFrame(self, text="Decode Audio to Image", padding=10)
+        self.decode_frame.pack(fill="x", padx=10, pady=10)
+
+        self.input_audio_label = ttk.Label(self.decode_frame, text="Select Audio (.wav):")
+        self.input_audio_label.pack(anchor="w")
+
+        self.input_audio_path = ttk.Entry(self.decode_frame, width=50)
+        self.input_audio_path.pack(side="left", padx=5, pady=5)
+
+        self.browse_audio_button = ttk.Button(self.decode_frame, text="Browse", command=self.browse_audio)
+        self.browse_audio_button.pack(side="left", padx=5)
+
+        self.decode_button = ttk.Button(self.decode_frame, text="Decode", command=self.decode_to_image)
+        self.decode_button.pack(side="left", padx=5)
+
+        # Console Output
+        self.console_frame = ttk.LabelFrame(self, text="Console Output", padding=10)
+        self.console_frame.pack(fill="both", padx=10, pady=10, expand=True)
+
+        self.console_output = scrolledtext.ScrolledText(self.console_frame, wrap="word", height=20)
+        self.console_output.pack(fill="both", expand=True)
+
+    def log_to_console(self, message):
+        self.console_output.insert(tk.END, f"{message}\n")
+        self.console_output.see(tk.END)
+
+    def browse_image(self):
+        filepath = askopenfilename(title="select the image", filetypes=[("Image files", "*.png;*.jpg;*.jpeg")])
+        if filepath:
+            self.input_image_path.delete(0, tk.END)
+            self.input_image_path.insert(0, filepath)
+
+    def browse_audio(self):
+        filepath = askopenfilename(title="select the audio", filetypes=[("Audio files", "*.wav")])
+        if filepath:
+            self.input_audio_path.delete(0, tk.END)
+            self.input_audio_path.insert(0, filepath)
+
+    def encode_to_audio(self):
+        image_path = self.input_image_path.get()
+        if not image_path:
+            self.log_to_console("Please select an image file!")
+            return
+        self.log_to_console(f"Encoding {image_path} to audio...")
+        threading.Thread(target=self.run_encode, args=(image_path,)).start()
+
+    def decode_to_image(self):
+        audio_path = self.input_audio_path.get()
+        if not audio_path:
+            self.log_to_console("Please select a .wav file!")
+            return
+        self.log_to_console(f"Decoding {audio_path} to image...")
+        threading.Thread(target=self.run_decode, args=(audio_path,)).start()
+
+    def run_encode(self, image_path):
+        try:
+            output_audio = "encoded_audio.wav"
+            bitstring = img2bit(image_path, 2)
+            bit2audio(bitstring, output_audio, 44100, 0.01, 100, 0.3, 2200)
+            self.log_to_console(f"Encoding complete! Output saved as {output_audio}.")
+        except Exception as e:
+            self.log_to_console(f"Error during encoding: {e}")
+
+    def run_decode(self, audio_path):
+        try:
+            output_image = "decoded_image.png"
+            bitstring = audio2bit(audio_path, 0.01, 44100, 100, 2200, 0.3)
+            bit2img(bitstring, output_image)
+            self.log_to_console(f"Decoding complete! Output saved as {output_image}.")
+        except Exception as e:
+            self.log_to_console(f"Error during decoding: {e}")
+
+
+# Start the application
+if __name__ == "__main__":
+    app = ImageAudioConverterApp()
+    app.mainloop()
