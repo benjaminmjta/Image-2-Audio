@@ -186,3 +186,82 @@ form{
     backdrop-filter: blur(.5rem);
     display: none;
 }
+
+.error_message{
+    position: fixed;
+    top: 0;
+    right: 0;
+    max-width: 20rem;
+    background-color: var(--background-color);
+    border: 1px solid red;
+    color: red;
+    padding: var(--primary-padding);
+    margin: var(--primary-margin);
+    border-radius: var(--primary-border-radius);
+}
+
+.hidden{
+    display: none;
+}
+
+.blinking{
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0% {
+        color: red;
+        border-color: red;
+    }
+    50% {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    100% {
+        color: red;
+        border-color: red;
+    }
+}
+
+.w100{
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .content {
+        grid-template-columns: 1fr; /* Eine Spalte */
+        grid-template-rows: auto; /* Automatische Höhe */
+        grid-gap: var(--primary-grid-gap);
+        height: auto;
+        max-height: none;
+    }
+
+    .image{
+        height: 20rem;
+    }
+
+    .control {
+        grid-column: 1 / 2; /* Nutzt die einzige Spalte */
+        grid-row: auto; /* Reihenfolge durch HTML bestimmt */
+    }
+
+    .up_img {
+        grid-column: 1 / 2;
+        grid-row: auto;
+    }
+
+    .gen_aud {
+        grid-column: 1 / 2;
+        grid-row: auto;
+    }
+
+    .up_aud {
+        grid-column: 1 / 2;
+        grid-row: auto;
+    }
+
+    .rec_img {
+        grid-column: 1 / 2;
+        grid-row: auto;
+    }
+}

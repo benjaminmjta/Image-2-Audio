@@ -1,6 +1,8 @@
-from flask import Blueprint, render_template, request, send_file, url_for
+from datetime import datetime
+from flask import Blueprint, render_template, request, send_file, url_for, jsonify
 import os
 from logic import image_to_audio as ita
+import wave
 
 main = Blueprint('main', __name__)
 
@@ -63,6 +65,38 @@ def upload_audio():
         audio_name = filename
     )
 
+@main.route('/save_recording', methods=['POST'])
+def save_audio():
+    if 'audio' not in request.files:
+        return jsonify(success = False, error = 'no audio file uploaded'), 400
+    audio = request.files['audio']
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    filename = f'recording_{timestamp}.wav'
+    filepath = os.path.join('.', 'app', 'static', 'audios', filename)
+
+    try:
+        pcm_data = audio.read()
+
+        with wave.open(filepath, 'wb') as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(44100)
+            wf.writeframes(pcm_data)
+
+        return jsonify(success = True, filename = filename)
+    except Exception as e:
+        print(f'error saving audio: {e}')
+        return jsonify(success = False, error = str(e)), 500
+
+@main.route('/recorded_audio')
+def recorded_audio():
+    filename = request.args.get('filename')
+    return render_template(
+        'index.html',
+        uploaded_audio = url_for('static', filename= os.path.join('audios', filename)),
+        audio_name = filename
+    )
+
 @main.route('/recover_image', methods=['POST'])
 def recover_image():
     audio_name = request.form['audio_name']
@@ -74,12 +108,22 @@ def recover_image():
     image_name = os.path.splitext(audio_name)[0] + '_recovered.png'
     image_path = os.path.join('.', 'app', 'static', 'images', image_name)
 
-    ita.audio_to_image(audio_path, image_path)
+    try:
+        ita.audio_to_image(audio_path, image_path)
 
-    return render_template(
-        'index.html',
-        uploaded_audio = url_for('static', filename= os.path.join('audios', audio_name)),
-        audio_name = audio_name,
-        recovered_image = url_for('static', filename= os.path.join('images', image_name)),
-        image_name = image_name
-    )
+        return render_template(
+            'index.html',
+            uploaded_audio = url_for('static', filename= os.path.join('audios', audio_name)),
+            audio_name = audio_name,
+            recovered_image = url_for('static', filename= os.path.join('images', image_name)),
+            image_name = image_name
+        )
+    except Exception as e:
+        error_message = f'error recovering image from audio {audio_name}. try a different one.'
+        print(f'{error_message}: {e}')
+        return render_template(
+            'index.html',
+            uploaded_audio = url_for('static', filename= os.path.join('audios', audio_name)),
+            audio_name = audio_name,
+            error_message = error_message
+        )

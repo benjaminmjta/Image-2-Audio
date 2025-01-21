@@ -281,4 +281,3 @@ def bit2img(bitstring, output_image):
 
     # Save the new image
     image.save(output_image)
-    print(f"Image successfully decoded to ./{output_image}")

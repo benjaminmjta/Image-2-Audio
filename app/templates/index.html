@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>img2wav</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <script src="{{ url_for('static', filename='scripts/index.js') }}"></script>
 </head>
 <body>
     <div class = 'content'>
@@ -17,7 +16,7 @@
                 <form action="/upload_image" method="post" enctype="multipart/form-data" onsubmit="showLoading()">
                     <label class="form_label">upload new image</label>
                     <label for="image_select" class="input_label">max 256x256</label>
-                    <input id="image_select" type="file" name="file" accept="image/*">
+                    <input id="image_select" type="file" name="file" accept="image/*" required>
                     <button type="submit">upload</button>
                 </form>
                 {% if uploaded_image %}
@@ -35,9 +34,21 @@
                 {% endif %}
                 <form action="/upload_audio" method="post" enctype="multipart/form-data" onsubmit="showLoading()">
                     <label class="form_label">upload new audio</label>
-                    <input id="audio_select" type="file" name="file" accept=".wav">
+                    <input id="audio_select" type="file" name="file" accept=".wav" required>
                     <button type="submit">upload</button>
                 </form>
+                <div class="w100">
+                    <label class="form_label">or record audio</label>
+                    <div class="form_line">
+                        <select id="microphone_select">
+                            <option value="default">default</option>
+                        </select>
+                        <div>
+                            <button id="record_button">rec.</button>
+                            <button id="stop_button">stop</button>
+                        </div>
+                    </div>
+                </div>
                 {% if uploaded_audio %}
                     <form action="/recover_image" method="post" onsubmit="showLoading()">
                         <label class="form_label">recover image from audio</label>
@@ -109,15 +120,22 @@
                 </div>
                 <div class='card_content'>
                     <img src="{{ recovered_image }}" alt="recovered image" class="image">
+                </div>
                 <div class='card_footer'>
                     <a href="{{ recovered_image }}" download>download image</a>
                 </div>
             </div>
         {% endif %}
     </div>
+    {% if error_message %}
+    <div class="error_message" id="error_message">
+        <span>{{error_message}}</span>
     </div>
+    {% endif %}
     <div class = 'loading' id = 'loading'>
         <span>loading, please wait...</span>
     </div>
+
+    <script src="{{ url_for('static', filename='scripts/index.js') }}"></script>
 </body>
 </html>
