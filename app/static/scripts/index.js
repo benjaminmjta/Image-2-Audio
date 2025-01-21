@@ -13,3 +13,7 @@ function syncColorDepthInputs(value) {
     document.getElementById("color_depth_sl").value = value;
     document.getElementById("color_depth_nr").value = value;
 }
+
+function showLoading(){
+    document.getElementById("loading").style.display = "flex";
+}

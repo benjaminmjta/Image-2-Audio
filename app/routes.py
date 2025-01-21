@@ -11,10 +11,10 @@ def index():
 @main.route('/upload_image', methods=['POST'])
 def upload_image():
     if 'file' not in request.files:
-        return 'No file uploaded', 400
+        return 'no file uploaded', 400
     file = request.files['file']
     if file.filename == '':
-        return 'No file selected', 400
+        return 'no file selected', 400
     filename = file.filename
     file_path = os.path.join('.', 'app', 'static', 'images', filename)
     file.save(file_path)

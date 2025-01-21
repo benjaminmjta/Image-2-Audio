@@ -14,14 +14,14 @@
                 control
             </div>
             <div class='card_content'>
-                <form action="/upload_image" method="post" enctype="multipart/form-data">
+                <form action="/upload_image" method="post" enctype="multipart/form-data" onsubmit="showLoading()">
                     <label class="form_label">upload new image</label>
                     <label for="image_select" class="input_label">max 256x256</label>
                     <input id="image_select" type="file" name="file" accept="image/*">
                     <button type="submit">upload</button>
                 </form>
                 {% if uploaded_image %}
-                    <form action="/convert_to_audio" method="post">
+                    <form action="/convert_to_audio" method="post" onsubmit="showLoading()">
                         <label class="form_label">convert image to audio</label>
                         <label for="color_depth_sl" class="input_label">color depth:</label>
                         <div class="form_line">
@@ -33,13 +33,13 @@
                         <button type="submit">convert</button>
                     </form>
                 {% endif %}
-                <form action="/upload_audio" method="post" enctype="multipart/form-data">
+                <form action="/upload_audio" method="post" enctype="multipart/form-data" onsubmit="showLoading()">
                     <label class="form_label">upload new audio</label>
                     <input id="audio_select" type="file" name="file" accept=".wav">
                     <button type="submit">upload</button>
                 </form>
                 {% if uploaded_audio %}
-                    <form action="/recover_image" method="post">
+                    <form action="/recover_image" method="post" onsubmit="showLoading()">
                         <label class="form_label">recover image from audio</label>
                         <input type="hidden" name="audio_name" value="{{ audio_name }}">
                         <button type="submit">recover</button>
@@ -115,6 +115,9 @@
             </div>
         {% endif %}
     </div>
+    </div>
+    <div class = 'loading' id = 'loading'>
+        <span>loading, please wait...</span>
     </div>
 </body>
 </html>
