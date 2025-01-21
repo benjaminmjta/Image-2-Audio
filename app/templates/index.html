@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>img2wav</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='scripts/index.js') }}"></script>
+</head>
+<body>
+    <div class = 'content'>
+        <div class="card control">
+            <div class='card_title'>
+                control
+            </div>
+            <div class='card_content'>
+                <form action="/upload_image" method="post" enctype="multipart/form-data">
+                    <label class="form_label">upload new image</label>
+                    <label for="image_select" class="input_label">max 256x256</label>
+                    <input id="image_select" type="file" name="file" accept="image/*">
+                    <button type="submit">upload</button>
+                </form>
+                {% if uploaded_image %}
+                    <form action="/convert_to_audio" method="post">
+                        <label class="form_label">convert image to audio</label>
+                        <label for="color_depth_sl" class="input_label">color depth:</label>
+                        <div class="form_line">
+                            <input type="range" id="color_depth_sl" name="color_depth" min="2" max="255" value="2" oninput="syncColorDepthInputs(this.value)"/>
+                            <input type="number" id="color_depth_nr" min="2" max="255" value="2" oninput="syncColorDepthInputs(this.value)"/>
+                        </div>
+                        <span class="form-alert" id="color_depth_alert"></span>
+                        <input id="" type="hidden" name="image_name" value="{{ image_name }}">
+                        <button type="submit">convert</button>
+                    </form>
+                {% endif %}
+                <form action="/upload_audio" method="post" enctype="multipart/form-data">
+                    <label class="form_label">upload new audio</label>
+                    <input id="audio_select" type="file" name="file" accept=".wav">
+                    <button type="submit">upload</button>
+                </form>
+                {% if uploaded_audio %}
+                    <form action="/recover_image" method="post">
+                        <label class="form_label">recover image from audio</label>
+                        <input type="hidden" name="audio_name" value="{{ audio_name }}">
+                        <button type="submit">recover</button>
+                    </form>
+                {% endif %}
+            </div>
+            <div class='card_footer'>
+
+            </div>
+        </div>
+
+        <div class = 'card up_img'>
+            <div class='card_title'>
+                uploaded image
+            </div>
+            <div class='card_content'>
+                {% if uploaded_image %}
+                    <img src="{{ uploaded_image }}" alt="uploaded image" class="image">
+                {% else %}
+                    <p>no image uploaded</p>
+                {% endif %}
+            </div>
+            <div class='card_footer'>
+            </div>
+        </div>
+
+        {% if audio_file %}
+            <div class='card gen_aud'>
+                <div class='card_title'>
+                    generated audio file
+                </div>
+                <div class='card_content'>
+                    <audio controls>
+                        <source src="{{ audio_file }}" type="audio/wav">
+                        browser does not support this audio file.
+                    </audio>
+                </div>
+                <div class='card_footer'>
+                    <a href="{{ audio_file }}">download audio</a>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class = 'card up_aud'>
+            <div class='card_title'>
+                uploaded audio
+            </div>
+            <div class='card_content'>
+                {% if uploaded_audio %}
+                    <audio controls>
+                        <source src="{{ uploaded_audio }}" type="audio/wav">
+                        browser does not support this audio file.
+                    </audio>
+                {% else %}
+                    <p>no audio uploaded</p>
+                {% endif %}
+            </div>
+            <div class='card_footer'>
+
+            </div>
+        </div>
+
+        {% if recovered_image %}
+            <div class='card rec_img'>
+                <div class='card_title'>
+                    recovered image (black and white)
+                </div>
+                <div class='card_content'>
+                    <img src="{{ recovered_image }}" alt="recovered image" class="image">
+                <div class='card_footer'>
+                    <a href="{{ recovered_image }}" download>download image</a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    </div>
+</body>
+</html>
