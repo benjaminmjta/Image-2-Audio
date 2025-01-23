@@ -2,7 +2,7 @@ from datetime import datetime
 from flask import Blueprint, render_template, request, send_file, url_for, jsonify
 import os
 from logic import image_to_audio as ita
-import wave
+import subprocess
 
 main = Blueprint('main', __name__)
 
@@ -70,19 +70,16 @@ def save_audio():
     if 'audio' not in request.files:
         return jsonify(success = False, error = 'no audio file uploaded'), 400
     audio = request.files['audio']
+    webm_path = os.path.join('.', 'app', 'static', 'audios', 'temp.webm')
     timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     filename = f'recording_{timestamp}.wav'
     filepath = os.path.join('.', 'app', 'static', 'audios', filename)
 
     try:
-        pcm_data = audio.read()
-
-        with wave.open(filepath, 'wb') as wf:
-            wf.setnchannels(1)
-            wf.setsampwidth(2)
-            wf.setframerate(44100)
-            wf.writeframes(pcm_data)
-
+        audio.save(webm_path)
+        command = ['ffmpeg', '-i', webm_path, '-ar', '44100', '-ac', '1', '-sample_fmt', 's16', filepath]
+        subprocess.run(command, check=True)
+        os.remove(webm_path)
         return jsonify(success = True, filename = filename)
     except Exception as e:
         print(f'error saving audio: {e}')

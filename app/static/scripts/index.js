@@ -27,6 +27,10 @@ function showLoading(){
     document.getElementById("loading").style.display = "flex";
 }
 
+function hideLoading(){
+    document.getElementById("loading").style.display = "none";
+}
+
 let mediaRecorder;
 let audioChunks = [];
 
@@ -51,12 +55,12 @@ recordButton.addEventListener("click", async () => {
         audio: {
             deviceId: selected_device_id !== 'default' ? {exact: selected_device_id} : undefined,
             channelCount: 1,
+            sampleSize: 16,
             sampleRate: 44100
         }
     }
 
     const stream = await navigator.mediaDevices.getUserMedia(constraints)
-    console.log(stream);
     mediaRecorder = new MediaRecorder(stream);
 
     mediaRecorder.ondataavailable = event => {
@@ -64,11 +68,9 @@ recordButton.addEventListener("click", async () => {
     };
 
     mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, {type: 'audio/pcm'});
+        showLoading()
+        const audioBlob = new Blob(audioChunks, {type: 'audio/wav'});
         audioChunks = [];
-
-        const reader = new FileReader();
-        reader.readAsArrayBuffer(audioBlob);
 
         const formData = new FormData();
         formData.append('audio', audioBlob);
@@ -79,6 +81,7 @@ recordButton.addEventListener("click", async () => {
         }).then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    hideLoading();
                     window.location.href = `/recorded_audio?filename=${data.filename}`;
                 } else {
                     alert('error saving recording: ' + data.error)
