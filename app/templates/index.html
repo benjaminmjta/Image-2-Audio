@@ -37,7 +37,7 @@
                     <input id="audio_select" type="file" name="file" accept=".wav" required>
                     <button type="submit">upload</button>
                 </form>
-                <div class="w100">
+                <div class="control_group">
                     <label class="form_label">or record audio</label>
                     <div class="form_line">
                         <select id="microphone_select">
@@ -67,7 +67,7 @@
                 <ul>
                     <li>upload image to convert it to audio</li>
                     <li>upload audio to recover image from it</li>
-                    <li>record audio to convert it to audio</li>
+                    <li>or record audio</li>
                 </ul>
             </div>
         </div>
@@ -82,8 +82,6 @@
                 {% else %}
                     <p>no image uploaded</p>
                 {% endif %}
-            </div>
-            <div class='card_footer'>
             </div>
         </div>
 
@@ -117,9 +115,6 @@
                 {% else %}
                     <p>no audio uploaded</p>
                 {% endif %}
-            </div>
-            <div class='card_footer'>
-
             </div>
         </div>
 

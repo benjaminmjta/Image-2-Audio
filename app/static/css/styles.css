@@ -31,12 +31,16 @@ audio {
     color: var(--primary-color);
 }
 
-a, button {
+select::-ms-expand {
+    display: none;
+}
+
+a, button, select, input[type="number"] {
     cursor: pointer;
     background-color: var(--background-color);
     font-size: var(--button-font-size);
     color: var(--primary-color);
-    border: 1px solid transparent;
+    border: 1px solid var(--primary-color);
     border-radius: var(--primary-border-radius);
     padding: var(--primary-padding);
     transition: all .2s ease-in-out;
@@ -45,8 +49,16 @@ a, button {
     font-weight: normal;
 }
 
-a:hover, button:hover {
+a:hover, button:hover, select:hover, input[type="number"]:hover{
     border: 1px solid var(--secondary-color);
+    color: var(--secondary-color);
+}
+
+input[type="number"]:focus {
+    box-shadow: none;
+    outline: none;
+    border: 1px solid var(--secondary-color);
+    color: var(--secondary-color);
 }
 
 .image {
@@ -97,6 +109,7 @@ a:hover, button:hover {
 }
 
 .card_footer{
+    border-top: 1px solid var(--secondary-color);
     height: fit-content;
     align-items: end;
 }
@@ -135,6 +148,7 @@ a:hover, button:hover {
     display: block;
     width: 100%;
     height: 1px;
+    align-self: start;
     background-color: var(--secondary-color);
     margin-bottom: var(--primary-margin);
     margin-top: var(--primary-margin);
@@ -144,7 +158,7 @@ form{
     display: flex;
     flex-direction: column;
     width: 100%;
-    gap: .4rem;
+    gap: .5rem;
 }
 
 .form-alert{
@@ -223,8 +237,11 @@ form{
     }
 }
 
-.w100{
+.control_group{
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
 }
 
 .slider-checkbox{
