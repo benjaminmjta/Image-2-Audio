@@ -14,6 +14,7 @@
     --secondary-color: #4DB9BC;
     --primary-grid-gap: .5rem;
     --button-font-size: .8rem;
+    --header-height: 5vh;
 }
 
 body {
@@ -22,6 +23,34 @@ body {
     font-family: OfficeCodePro, Arial, sans-serif;
     margin: 0;
     padding: 0;
+}
+
+.header{
+    display: flex;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: calc(100% - 2 * var(--primary-padding));
+    height: var(--header-height);
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--primary-padding);
+    background-color: var(--background-color);
+    border-bottom: 1px solid var(--secondary-color);
+}
+
+.header_title{
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    color: var(--secondary-color);
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.header_title > img{
+    max-height: 3rem;
 }
 
 audio {
@@ -54,6 +83,24 @@ a:hover, button:hover, select:hover, input[type="number"]:hover{
     color: var(--secondary-color);
 }
 
+.record_buttons{
+    display: flex;
+    align-items: center;
+    gap:0;
+}
+
+#record_button{
+    width: 3rem;
+    border-bottom-right-radius: 0;
+    border-top-right-radius: 0;
+}
+
+#stop_button{
+    width: 3rem;
+    border-bottom-left-radius: 0;
+    border-top-left-radius: 0;
+}
+
 input[type="number"]:focus {
     box-shadow: none;
     outline: none;
@@ -74,8 +121,8 @@ input[type="number"]:focus {
     grid-template-columns: .5fr 1fr 1fr;
     grid-template-rows: 1fr 1fr;
     grid-gap: var(--primary-grid-gap);
-    height: 90vh;
-    max-height: 90vh;
+    height: calc(100vh - var(--header-height) - 2 * var(--primary-padding) - 2 * var(--primary-padding));
+    margin-top: calc(var(--header-height) + var(--primary-padding) + var(--primary-margin));
 }
 
 .card {
@@ -87,16 +134,13 @@ input[type="number"]:focus {
     border-radius: var(--primary-border-radius);
 }
 
-.card > div{
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--primary-padding);
-}
-
 .card_title{
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    gap: .5rem;
     color: var(--secondary-color);
+    padding: var(--primary-padding);
     font-size: 1.2rem;
     font-weight: bold;
     border-bottom: 1px solid var(--secondary-color);
@@ -104,14 +148,21 @@ input[type="number"]:focus {
 }
 
 .card_content{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--primary-padding);
     height: 100%;
     justify-content: normal;
 }
 
 .card_footer{
+    padding: var(--primary-padding);
+    display: flex;
+    align-items: center;
+    justify-content: end;
     border-top: 1px solid var(--secondary-color);
     height: fit-content;
-    align-items: end;
 }
 
 .control{
