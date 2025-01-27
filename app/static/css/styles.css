@@ -11,7 +11,7 @@
     --primary-border-radius: .5rem;
     --background-color: #000;
     --primary-color: #fff;
-    --secondary-color: #C2FCF7;
+    --secondary-color: #4DB9BC;
     --primary-grid-gap: .5rem;
     --button-font-size: .8rem;
 }
@@ -225,6 +225,34 @@ form{
 
 .w100{
     width: 100%;
+}
+
+.slider-checkbox{
+    display: none;
+}
+
+.slider-checkbox + label{
+    width: 2rem;
+    height: 1rem;
+    background-color: var(--background-color);
+    border: 1px solid var(--secondary-color);
+    border-radius: 999rem;
+    cursor:pointer;
+}
+
+.slider-checkbox + label::before{
+    content: "";
+    display: block;
+    border-radius: 999rem;
+    width: .8rem;
+    height: .8rem;
+    margin: .1rem;
+    background-color: var(--secondary-color);
+    transition: transform .2s;
+}
+
+.slider-checkbox:checked + label::before{
+    transform: translateX(1rem);
 }
 
 @media (max-width: 768px) {

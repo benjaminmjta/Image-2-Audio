@@ -97,6 +97,7 @@ def recorded_audio():
 @main.route('/recover_image', methods=['POST'])
 def recover_image():
     audio_name = request.form['audio_name']
+    ft_version = int(request.form.get('ft_version', 0))
     audio_path = os.path.join('.', 'app', 'static', 'audios', audio_name)
 
     if not os.path.exists(audio_path):
@@ -106,7 +107,7 @@ def recover_image():
     image_path = os.path.join('.', 'app', 'static', 'images', image_name)
 
     try:
-        ita.audio_to_image(audio_path, image_path)
+        ita.audio_to_image(audio_path, image_path, ft_version)
 
         return render_template(
             'index.html',

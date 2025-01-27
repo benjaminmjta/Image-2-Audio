@@ -22,11 +22,12 @@ def image_to_audio(input, output, color_depth = 2, sample_rate = 44100, symbol_d
     bits = img2bit(input, color_depth)
     bit2audio(bits, output, sample_rate, symbol_duration, freq_rate, startmarker_duration, startmarker_frequency)
 
-def audio_to_image(input, output, sample_rate = 44100, symbol_duration = 0.01, freq_rate = 100, startmarker_frequency = 2200, startmarker_duration = 0.3):
+def audio_to_image(input, output, ft_version = 0, sample_rate = 44100, symbol_duration = 0.01, freq_rate = 100, startmarker_frequency = 2200, startmarker_duration = 0.3):
     '''
     Creates an recovered image from an audio file.
     :param input: Audio file path and filename
     :param output: Image file path and filename
+    :param ft_version: Use numpy-fft(0), fft(1) or dft(2) for frequency analysis. Default: 0.
     :param sample_rate: Sample rate of the audio file. Default: 44100.
     :param symbol_duration: Duration of a symbol (4bits) in seconds. Default: 0.01.
     :param freq_rate: Frequency distance between the symbols in Hz. Default: 100.
@@ -34,7 +35,7 @@ def audio_to_image(input, output, sample_rate = 44100, symbol_duration = 0.01, f
     :param startmarker_duration: Duration of the startmarker in seconds. Default: 0.3.
     :return: None
     '''
-    bits = audio2bit(input, symbol_duration, sample_rate, freq_rate, startmarker_frequency, startmarker_duration)
+    bits = audio2bit(input, ft_version, symbol_duration, sample_rate, freq_rate, startmarker_frequency, startmarker_duration)
     bit2img(bits, output)
 
 def img2bit(input_image, color_depth):
@@ -140,26 +141,22 @@ def find_startmarker(signal, sample_rate, startmarker_frequency, startmarker_dur
     '''
     window_samples = int(startmarker_duration * sample_rate)
 
-    # iterate through signal to find startmarker
     for i in range(0, len(signal) - window_samples, window_samples // 2):
         segment = signal[i:i + window_samples]
 
-        # fourier transform
         fft_result = np.fft.fft(segment)
         freqs = np.fft.fftfreq(len(segment), 1 / sample_rate)
         magnitude = np.abs(fft_result)
 
-        # get dominant freq
         dominant_freq = abs(freqs[np.argmax(magnitude)])
 
-        # check if dominant freq = startmarker
         if abs(dominant_freq - startmarker_frequency) <= 10:
             return i + window_samples  # startindex
 
-    return -1  # no startmarker found
+    return -1
 
 
-def audio2bit(encoded_audio, symbol_duration, sample_rate, freq_rate, startmarker_frequency, startmarker_duration):
+def audio2bit(encoded_audio, ft_version ,symbol_duration, sample_rate, freq_rate, startmarker_frequency, startmarker_duration):
     '''
     decodes audio (.wav) to bitstring
     :param encoded_audio: path and filename of the encoded audio file
@@ -171,7 +168,6 @@ def audio2bit(encoded_audio, symbol_duration, sample_rate, freq_rate, startmarke
     :return: bitstring of the decoded audio
     '''
     frequencies = [500 + i * freq_rate for i in range(16)]
-    frequencies.append(startmarker_frequency)
 
     with wave.open(encoded_audio, 'r') as wav_file:
         n_channels = wav_file.getnchannels()
@@ -198,47 +194,20 @@ def audio2bit(encoded_audio, symbol_duration, sample_rate, freq_rate, startmarke
 
     bitstring = ""
 
-    freqs = np.fft.fftfreq(samples_per_symbol, 1 / sample_rate)
-
-    # decode every symbol
     for i in range(start_index, len(signal), samples_per_symbol):
-        # get current symbol
         segment = signal[i:i + samples_per_symbol]
 
-        '''
-        # fourier transform manual implementation
-        # 1 -> fft, 0 -> dft
-        ft_version = 1
         dominant_frequency = ft.get_frequency(segment, sample_rate, ft_version)
-        print(f"dominant frequency manual: {dominant_frequency}Hz")
-        dominant_frequency = min(frequencies, key=lambda x: abs(x - dominant_frequency))
-        print(f"rounded dominant frequency manual: {dominant_frequency}Hz")
-        '''
 
-        '''
-        if dominant_frequency == frequencies[16]:
-
-            continue
+        # round to nearest frequency in frequencies if distance is < 50
+        closest = min(frequencies, key=lambda x: abs(x - dominant_frequency))
+        if abs(dominant_frequency - closest) < 50:
+            dominant_frequency = closest
 
         if dominant_frequency in frequencies:
             bitstring += format(int(dominant_frequency/freq_rate) - int(frequencies[0]/freq_rate), '04b')
         else:
             print(f"unknown frequency: {dominant_frequency}Hz, skipped.")
-        '''
-
-        # fast fourier via np library
-        # fourier transform to get current frequency
-        fft_result = np.fft.fft(segment)
-
-        # get dominating freq
-        magnitude = np.abs(fft_result)
-        dominant_freq = abs(freqs[np.argmax(magnitude)])
-
-        # freq to symbol
-        if dominant_freq in frequencies:
-            bitstring += format(int(dominant_freq / freq_rate) - int(frequencies[0] / freq_rate), '04b')
-        else:
-            print(f"unknown frequency: {dominant_freq}Hz, skipped.")
 
     return bitstring
 

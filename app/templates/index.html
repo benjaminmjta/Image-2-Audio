@@ -53,6 +53,12 @@
                     <form action="/recover_image" method="post" onsubmit="showLoading()">
                         <label class="form_label">recover image from audio</label>
                         <input type="hidden" name="audio_name" value="{{ audio_name }}">
+                        <div class="form_line">
+                            <label class="input_label">numpy fft</label>
+                            <input id="ft_checkbox" type="checkbox" name="ft_version" class="slider-checkbox" value="1"/>
+                            <label for="ft_checkbox" class="slider"></label>
+                            <label class="input_label">manual fft</label>
+                        </div>
                         <button type="submit">recover</button>
                     </form>
                 {% endif %}
