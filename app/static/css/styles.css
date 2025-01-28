@@ -324,6 +324,10 @@ form{
 }
 
 @media (max-width: 768px) {
+    .about{
+        display: none;
+    }
+
     .content {
         grid-template-columns: 1fr; /* Eine Spalte */
         grid-template-rows: auto; /* Automatische Höhe */
