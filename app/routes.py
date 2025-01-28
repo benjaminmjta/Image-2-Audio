@@ -30,6 +30,13 @@ def upload_image():
 @main.route('/convert_to_audio', methods=['POST'])
 def convert_image_to_audio():
     color_depth = int(request.form['color_depth'])
+
+    if color_depth > 4:
+        color_depth = 8
+
+    if color_depth not in [1, 2, 3, 4, 8]:
+        return 'invalid color depth', 400
+
     image_name = request.form['image_name']
     image_path = os.path.join('.', 'app', 'static', 'images', image_name)
 

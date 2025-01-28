@@ -40,10 +40,11 @@
                         <label class="form_label">convert image to audio</label>
                         <label for="color_depth_sl" class="input_label">color depth:</label>
                         <div class="form_line">
-                            <input type="range" id="color_depth_sl" name="color_depth" min="2" max="255" value="2" oninput="syncColorDepthInputs(this.value)"/>
-                            <input type="number" id="color_depth_nr" min="2" max="255" value="2" oninput="syncColorDepthInputs(this.value)"/>
+                            <input type="range" id="color_depth_sl" name="color_depth" min="1" max="5" value="1" oninput="ColorDepthControl()"/>
+                            <span id="color_depth_label" for="color_depth_sl">1 Bit</span>
                         </div>
                         <span class="form-alert" id="color_depth_alert"></span>
+                        <button type="button" id="color_switch">converting in grayscale</button>
                         <input id="" type="hidden" name="image_name" value="{{ image_name }}">
                         <button type="submit">{{font_awesome.render_icon("fa-solid fa-gears")}} convert</button>
                     </form>

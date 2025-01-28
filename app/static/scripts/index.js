@@ -1,4 +1,10 @@
+let color_button = document.getElementById("color_switch");
+let color_slider = document.getElementById("color_depth_sl");
+let color_label = document.getElementById("color_depth_label");
+
 window.onload = function() {
+    color_slider.value = 1;
+    ColorDepthControl();
     setTimeout(function() {
         const messageField = document.getElementById('error_message');
         if (messageField) {
@@ -7,20 +13,64 @@ window.onload = function() {
     }, 5000);
 };
 
-function syncColorDepthInputs(value) {
-    if(value < 2){
-        value = 2;
+color_button.addEventListener("click", SwitchColorGray);
+
+function ButtonGray(){
+    color_button.textContent = "converting in grayscale";
+    color_button.classList.remove('rainbow');
+}
+
+function ButtonColor(){
+    color_button.textContent = "converting in color";
+    color_button.classList.add('rainbow');
+}
+
+
+function SwitchColorGray(){
+    if(color_slider.value < 4){
+        ButtonColor()
+        color_slider.value = 4;
+        ColorDepthControl(4);
     }
-    if(value > 255){
-        value = 255;
+    else{
+        ButtonGray()
+        color_slider.value = 1;
+        ColorDepthControl(1);
     }
-    if(value > 16){
-        document.getElementById("color_depth_alert").textContent = "high values can cause very long loading times!";
+
+}
+
+function ColorDepthControl(){
+    let value = color_slider.value
+    switch (value) {
+        case '1':
+            color_label.textContent = "1 Bit";
+            ButtonGray();
+            break;
+        case '2':
+            color_label.textContent = "2 Bit";
+            ButtonGray();
+            break;
+        case '3':
+            color_label.textContent = "3 Bit";
+            ButtonGray();
+            break;
+        case '4':
+            color_label.textContent = "4 Bit";
+            ButtonColor();
+            break;
+        case '5':
+            color_label.textContent = "8 Bit";
+            ButtonColor();
+            break;
+        default:
+            break;
+    }
+    if(value > 4){
+        document.getElementById("color_depth_alert").textContent = "color depth > 4 can cause very long loading times!";
     } else {
         document.getElementById("color_depth_alert").textContent = "";
     }
-    document.getElementById("color_depth_sl").value = value;
-    document.getElementById("color_depth_nr").value = value;
 }
 
 function showLoading(){

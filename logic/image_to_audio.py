@@ -45,37 +45,44 @@ def img2bit(input_image, color_depth):
     :param color_depth: depth of color information min: 2 max: 255
     :return: bitstring of the image
     '''
-    ## img to binary (black white) umwandeln
-    image_convert_format = 'L'
-    if color_depth <= 2: image_convert_format = '1'
-    image = Image.open(input_image).convert(f'{image_convert_format}')  # 'L' = grayscale '1' = black and white
+    if color_depth not in [1, 2, 3, 4, 8]:
+        raise ValueError("error creating bitstring: color depth must be 1, 2, 3, 4 or 8")
 
-    if not (2 <= color_depth <= 255):
-        raise ValueError("Color depth must be between 2 and 255")
+    if color_depth <= 3:
+        image = Image.open(input_image).convert('L')
+    else:
+        image = Image.open(input_image).convert('RGB')
 
-    color_depth_bits = format(color_depth, '08b')
-
-    bits_per_pixel = math.ceil(math.log2(color_depth))
-
-    ## width and length
     width, height = image.size
     if width * height > 256 * 256:
-        raise ValueError("images over 256x256 are not supported")
+        raise ValueError("error creating bitstring: images over 256x256 are not supported")
+
     height_bits = format(height, '016b')
     width_bits = format(width, '016b')
+    color_depth_bits = format(color_depth, '08b')
 
-    ## img to binary bitstring
-    ## 0 -> white, 255 -> black
+    pixel_bits = ''
     pixels = image.getdata()
-    max_pixel_value = 2 ** bits_per_pixel - 1
-    pixels_scaled = [round(pixel * max_pixel_value / 255) for pixel in pixels]
 
-    # Convert pixel values to binary representation
-    pixels_bits = ''.join(format(pixel, f'0{bits_per_pixel}b') for pixel in pixels_scaled)
+    if color_depth <= 3:
+        max_pixel_value = 2 ** color_depth - 1
+        pixel_bits = ''.join(
+            format(round(pixel * max_pixel_value / 255), f'0{color_depth}b') for pixel in pixels
+        )
+    else:
+        bits_per_channel = int(color_depth / 4)
+        max_channel_value = int(2 ** (color_depth / 4) - 1)
+        for r, g, b in pixels:
+            r_bits = format(round(r * max_channel_value / 255), f'0{bits_per_channel}b')
+            g_bits = format(round(g * max_channel_value / 255), f'0{bits_per_channel}b')
+            b_bits = format(round(b * max_channel_value / 255), f'0{bits_per_channel}b')
 
-    ## create final string
-    bitstring = height_bits + width_bits + color_depth_bits + pixels_bits
+            brightness = round(((r + g + b) / 3) * max_channel_value / 255)
+            brightness_bits = format(brightness, f'0{bits_per_channel}b')
 
+            pixel_bits += f'{r_bits}{g_bits}{b_bits}{brightness_bits}'
+
+    bitstring = height_bits + width_bits + color_depth_bits + pixel_bits
     print(f"Image {input_image} successfully encoded to bitstring.")
     return bitstring
 
@@ -207,7 +214,8 @@ def audio2bit(encoded_audio, ft_version ,symbol_duration, sample_rate, freq_rate
         if dominant_frequency in frequencies:
             bitstring += format(int(dominant_frequency/freq_rate) - int(frequencies[0]/freq_rate), '04b')
         else:
-            print(f"unknown frequency: {dominant_frequency}Hz, skipped.")
+            bitstring += format(int(closest/freq_rate) - int(frequencies[0]/freq_rate), '04b')
+            print(f"unknown frequency: {dominant_frequency}Hz, using {closest}Hz.")
 
     return bitstring
 
@@ -228,25 +236,40 @@ def bit2img(bitstring, output_image):
     width = int(bitstring[16:32], 2)
     color_depth = int(bitstring[32:40], 2)
 
-    bits_per_pixel = math.ceil(math.log2(color_depth))
+    if color_depth not in [1, 2, 3, 4, 8]:
+        raise ValueError("Error decoding bitstring: color depth must be 1, 2, 3, 4 or 8")
 
-    ## check if bitstring length fits with proportions
-    if len(bitstring) < height * width * bits_per_pixel + 16 + 16 + 8:
-        raise ValueError("invalid bitstring length")
-
-    # Extract pixel bits and convert them to grayscale values
+    bits_per_pixel = color_depth
     pixel_bits = bitstring[40:]
-    pixels = [
-        int(pixel_bits[i:i + bits_per_pixel], 2) * (255 // (2 ** bits_per_pixel - 1))
-        for i in range(0, len(pixel_bits), bits_per_pixel)
-    ]
+    pixels = []
 
-    image_convert_format = 'L'
-    if color_depth <= 2: image_convert_format = '1'
+    if color_depth <= 3:
+        max_pixel_value = 2 ** color_depth - 1
+        pixels = [
+            int(pixel_bits[i : i + bits_per_pixel], 2) * (255 // max_pixel_value)
+            for i in range(0, len(pixel_bits), bits_per_pixel)
+        ]
+        mode = 'L'
+    else:
+        bits_per_channel = int(color_depth / 4)
+        max_channel_value = int(2 ** (color_depth / 4) - 1)
 
-    # Create a new image
-    image = Image.new(f'{image_convert_format}', (width, height))
+        for i in range(0, len(pixel_bits), color_depth):
+            r = int(pixel_bits[i : i + bits_per_channel], 2) * (255 // max_channel_value)
+            g = int(pixel_bits[i + bits_per_channel : i + 2 * bits_per_channel], 2) * (255 // max_channel_value)
+            b = int(pixel_bits[i + 2 * bits_per_channel : i + 3 * bits_per_channel], 2) * (255 // max_channel_value)
+            brightness = int(pixel_bits[i + 3 * bits_per_channel : i + 4 * bits_per_channel], 2) * (255 // max_channel_value)
+
+            r = r if brightness else r // 2
+            g = g if brightness else g // 2
+            b = b if brightness else b // 2
+
+            pixels.append((r, g, b))
+
+        mode = 'RGB'
+
+    image = Image.new(mode, (width, height))
     image.putdata(pixels)
-
-    # Save the new image
     image.save(output_image)
+
+    print(f"Image successfully decoded from bitstring to {output_image}")

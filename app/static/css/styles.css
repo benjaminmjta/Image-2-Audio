@@ -323,6 +323,21 @@ form{
     transform: translateX(1rem);
 }
 
+#color_switch{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 1.8rem;
+    width: fit-content;
+    border: 1px solid transparent;
+}
+
+.rainbow{
+    background: linear-gradient(90deg, red, orange, yellow, green, cyan, cyan);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
 @media (max-width: 768px) {
     .about{
         display: none;
