@@ -31,7 +31,7 @@
             <div class='card_content'>
                 <form action="/upload_image" method="post" enctype="multipart/form-data" onsubmit="showLoading()">
                     <label class="form_label">upload new image</label>
-                    <label for="image_select" class="input_label">max 256x256</label>
+                    <label for="image_select" class="input_label">max 128x128, higher resolution will be resized.</label>
                     <input id="image_select" type="file" name="file" accept="image/*" required>
                     <button type="submit">{{font_awesome.render_icon("fa-solid fa-upload")}} upload</button>
                 </form>

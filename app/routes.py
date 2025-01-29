@@ -21,6 +21,9 @@ def upload_image():
     file_path = os.path.join('.', 'app', 'static', 'images', filename)
     file.save(file_path)
 
+    image_path = os.path.join('.', 'app', 'static', 'images', filename)
+    ita.resize_img(image_path, 128*128)
+
     return render_template(
         'index.html',
         uploaded_image = url_for('static', filename= os.path.join('images', filename)),

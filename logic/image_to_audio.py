@@ -38,6 +38,23 @@ def audio_to_image(input, output, ft_version = 0, sample_rate = 44100, symbol_du
     bits = audio2bit(input, ft_version, symbol_duration, sample_rate, freq_rate, startmarker_frequency, startmarker_duration)
     bit2img(bits, output)
 
+def resize_img(input_image, max_size):
+    '''
+    downsizes big image to max_size. this will overwrite the input_image
+    :param input_image: path to image
+    :param max_size: max size (area) of the image in pixels
+    :return: None
+    '''
+    image = Image.open(input_image)
+    width, height = image.size
+    if width * height > max_size:
+        scale = math.sqrt(max_size / (width * height))
+        width = max(1, int(width * scale))
+        height = max(1, int(height * scale))
+        image = image.resize((width, height))
+        print(f'Image successfully resized to {width} x {height} pixels.')
+        image.save(input_image)
+
 def img2bit(input_image, color_depth):
     '''
     converts image to bitstring
@@ -54,9 +71,14 @@ def img2bit(input_image, color_depth):
         image = Image.open(input_image).convert('RGBA')
 
     width, height = image.size
-    if width * height > 256 * 256:
-        raise ValueError("error creating bitstring: images over 256x256 are not supported")
+    size = width * height
+    max_size = 128 * 128
 
+    if size > max_size:
+        resize_img(input_image, max_size)
+        image = Image.open(input_image)
+
+    width, height = image.size
     height_bits = format(height, '016b')
     width_bits = format(width, '016b')
     color_depth_bits = format(color_depth, '08b')
