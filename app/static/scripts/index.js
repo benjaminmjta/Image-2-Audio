@@ -5,6 +5,7 @@ let color_label = document.getElementById("color_depth_label");
 window.onload = function() {
     color_slider.value = 1;
     ColorDepthControl();
+    hideLoading();
     setTimeout(function() {
         const messageField = document.getElementById('error_message');
         if (messageField) {

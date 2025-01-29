@@ -51,7 +51,7 @@ def img2bit(input_image, color_depth):
     if color_depth <= 3:
         image = Image.open(input_image).convert('L')
     else:
-        image = Image.open(input_image).convert('RGB')
+        image = Image.open(input_image).convert('RGBA')
 
     width, height = image.size
     if width * height > 256 * 256:
@@ -72,15 +72,13 @@ def img2bit(input_image, color_depth):
     else:
         bits_per_channel = int(color_depth / 4)
         max_channel_value = int(2 ** (color_depth / 4) - 1)
-        for r, g, b in pixels:
+        for r, g, b, a in pixels:
             r_bits = format(round(r * max_channel_value / 255), f'0{bits_per_channel}b')
             g_bits = format(round(g * max_channel_value / 255), f'0{bits_per_channel}b')
             b_bits = format(round(b * max_channel_value / 255), f'0{bits_per_channel}b')
+            a_bits = format(round(a * max_channel_value / 255), f'0{bits_per_channel}b')
 
-            brightness = round(((r + g + b) / 3) * max_channel_value / 255)
-            brightness_bits = format(brightness, f'0{bits_per_channel}b')
-
-            pixel_bits += f'{r_bits}{g_bits}{b_bits}{brightness_bits}'
+            pixel_bits += f'{r_bits}{g_bits}{b_bits}{a_bits}'
 
     bitstring = height_bits + width_bits + color_depth_bits + pixel_bits
     print(f"Image {input_image} successfully encoded to bitstring.")
@@ -258,15 +256,11 @@ def bit2img(bitstring, output_image):
             r = int(pixel_bits[i : i + bits_per_channel], 2) * (255 // max_channel_value)
             g = int(pixel_bits[i + bits_per_channel : i + 2 * bits_per_channel], 2) * (255 // max_channel_value)
             b = int(pixel_bits[i + 2 * bits_per_channel : i + 3 * bits_per_channel], 2) * (255 // max_channel_value)
-            brightness = int(pixel_bits[i + 3 * bits_per_channel : i + 4 * bits_per_channel], 2) * (255 // max_channel_value)
+            a = int(pixel_bits[i + 3 * bits_per_channel : i + 4 * bits_per_channel], 2) * (255 // max_channel_value)
 
-            r = r if brightness else r // 2
-            g = g if brightness else g // 2
-            b = b if brightness else b // 2
+            pixels.append((r, g, b, a))
 
-            pixels.append((r, g, b))
-
-        mode = 'RGB'
+        mode = 'RGBA'
 
     image = Image.new(mode, (width, height))
     image.putdata(pixels)

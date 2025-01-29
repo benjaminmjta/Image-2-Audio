@@ -80,13 +80,6 @@
                     </form>
                 {% endif %}
             </div>
-            <div class='card_footer'>
-                <ul>
-                    <li>upload image to convert it to audio</li>
-                    <li>upload audio to recover image from it</li>
-                    <li>or record audio</li>
-                </ul>
-            </div>
         </div>
 
         <div class = 'card up_img'>
@@ -138,7 +131,7 @@
         {% if recovered_image %}
             <div class='card rec_img'>
                 <div class='card_title'>
-                    <label>{{font_awesome.render_icon("fa-solid fa-file-image")}}</label><label>recovered image (black and white)</label>
+                    <label>{{font_awesome.render_icon("fa-solid fa-file-image")}}</label><label>recovered image</label>
                 </div>
                 <div class='card_content'>
                     <img src="{{ recovered_image }}" alt="recovered image" class="image">
