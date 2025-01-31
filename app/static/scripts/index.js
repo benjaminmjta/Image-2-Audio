@@ -3,8 +3,11 @@ let color_slider = document.getElementById("color_depth_sl");
 let color_label = document.getElementById("color_depth_label");
 
 window.onload = function() {
-    color_slider.value = 1;
-    ColorDepthControl();
+    if(color_button != null){
+        color_slider.value = 1;
+        ColorDepthControl();
+        color_button.addEventListener("click", SwitchColorGray);
+    }
     hideLoading();
     setTimeout(function() {
         const messageField = document.getElementById('error_message');
@@ -14,7 +17,6 @@ window.onload = function() {
     }, 5000);
 };
 
-color_button.addEventListener("click", SwitchColorGray);
 
 function ButtonGray(){
     color_button.textContent = "converting in grayscale";

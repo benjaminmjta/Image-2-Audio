@@ -5,10 +5,10 @@ from PIL import Image
 from logic import fourier_transform as ft
 
 
-def image_to_audio(input, output, color_depth = 2, sample_rate = 44100, symbol_duration = 0.01, freq_rate = 100, startmarker_frequency = 2200, startmarker_duration = 0.3):
-    '''
+def image_to_audio(input_image, output, color_depth = 2, sample_rate = 44100, symbol_duration = 0.01, freq_rate = 100, startmarker_frequency = 2200, startmarker_duration = 0.3):
+    """
     Creates an audio file from an image file.
-    :param input:Image file path and filename.
+    :param input_image:Image file path and filename.
     :param output: Audio file path and filename.
     :param color_depth: Color depth of the image. Min: 2, Max: 255. Default: 2.
     :param sample_rate: Sample rate of the audio file. Default: 44100.
@@ -17,15 +17,15 @@ def image_to_audio(input, output, color_depth = 2, sample_rate = 44100, symbol_d
     :param startmarker_frequency: Frequency of the startmarker in Hz. Default: 2200.
     :param startmarker_duration: Duration of the startmarker in seconds. Default: 0.3.
     :return: None
-    '''
+    """
 
-    bits = img2bit(input, color_depth)
+    bits = img2bit(input_image, color_depth)
     bit2audio(bits, output, sample_rate, symbol_duration, freq_rate, startmarker_duration, startmarker_frequency)
 
-def audio_to_image(input, output, ft_version = 0, sample_rate = 44100, symbol_duration = 0.01, freq_rate = 100, startmarker_frequency = 2200, startmarker_duration = 0.3):
-    '''
-    Creates an recovered image from an audio file.
-    :param input: Audio file path and filename
+def audio_to_image(input_audio, output, ft_version = 0, sample_rate = 44100, symbol_duration = 0.01, freq_rate = 100, startmarker_frequency = 2200, startmarker_duration = 0.3):
+    """
+    Creates a recovered image from an audio file.
+    :param input_audio: Audio file path and filename
     :param output: Image file path and filename
     :param ft_version: Use numpy-fft(0), fft(1) or dft(2) for frequency analysis. Default: 0.
     :param sample_rate: Sample rate of the audio file. Default: 44100.
@@ -34,17 +34,17 @@ def audio_to_image(input, output, ft_version = 0, sample_rate = 44100, symbol_du
     :param startmarker_frequency: Frequency of the startmarker in Hz. Default: 2200.
     :param startmarker_duration: Duration of the startmarker in seconds. Default: 0.3.
     :return: None
-    '''
-    bits = audio2bit(input, ft_version, symbol_duration, sample_rate, freq_rate, startmarker_frequency, startmarker_duration)
+    """
+    bits = audio2bit(input_audio, ft_version, symbol_duration, sample_rate, freq_rate, startmarker_frequency, startmarker_duration)
     bit2img(bits, output)
 
 def resize_img(input_image, max_size):
-    '''
+    """
     downsizes big image to max_size. this will overwrite the input_image
     :param input_image: path to image
     :param max_size: max size (area) of the image in pixels
     :return: None
-    '''
+    """
     image = Image.open(input_image)
     width, height = image.size
     if width * height > max_size:
@@ -56,12 +56,12 @@ def resize_img(input_image, max_size):
         image.save(input_image)
 
 def img2bit(input_image, color_depth):
-    '''
+    """
     converts image to bitstring
     :param input_image: path and filename of the input image
     :param color_depth: depth of color information min: 2 max: 255
     :return: bitstring of the image
-    '''
+    """
     if color_depth not in [1, 2, 3, 4, 8]:
         raise ValueError("error creating bitstring: color depth must be 1, 2, 3, 4 or 8")
 
@@ -72,7 +72,7 @@ def img2bit(input_image, color_depth):
 
     width, height = image.size
     size = width * height
-    max_size = 128 * 128
+    max_size = 64 * 64
 
     if size > max_size:
         resize_img(input_image, max_size)
@@ -108,7 +108,7 @@ def img2bit(input_image, color_depth):
 
 
 def bit2audio(bitstring, encoded_audio, sample_rate, bitgroup_duration, freq_rate, startmarker_duration, startmarker_frequency):
-    '''
+    """
     converts bitstring to audio (.wav)
     :param bitstring: bitstring of the image, has to be formatted as follows: height_bits(16bits) + width_bits(16bits) + color_depth_bits(8bits) + pixel_bits
     :param encoded_audio: path and filename of the output encoded audio file
@@ -118,28 +118,25 @@ def bit2audio(bitstring, encoded_audio, sample_rate, bitgroup_duration, freq_rat
     :param startmarker_duration: duration of the startmarker in seconds
     :param startmarker_frequency: frequency of the startmarker in Hz
     :return: None
-    '''
+    """
     frequencies = [500 + i * freq_rate for i in range(16)]
 
-    # check if bitstring is groupable with group size of 4
-    padding_length = (4 - (len(bitstring) % 4)) % 4  # number of padding bits
-    bitstring += '0' * padding_length  # padding
+    padding_length = (4 - (len(bitstring) % 4)) % 4
+    bitstring += '0' * padding_length
 
     grouped_bits = [bitstring[i:i + 4] for i in range(0, len(bitstring), 4)]
     symbols = [int(bits, 2) for bits in grouped_bits]
 
-    amplitude = 32767  # max amp 16 bit PCM
+    amplitude = 32767
     samples_per_group = bitgroup_duration * sample_rate
     signal = []
 
-    # startmaker
     marker_samples = startmarker_duration * sample_rate
     marker_frequency = startmarker_frequency
     for i in range(int(marker_samples)):
         signal_value = amplitude * math.sin(2 * math.pi * marker_frequency * i / sample_rate)
         signal.append(int(signal_value))
 
-    # symbols
     for symbol in symbols:
         frequency = frequencies[symbol]
         for i in range(int(samples_per_group)):
@@ -147,9 +144,9 @@ def bit2audio(bitstring, encoded_audio, sample_rate, bitgroup_duration, freq_rat
             signal.append(int(signal_value))
 
     with wave.open(encoded_audio, 'wb') as wf:
-        wf.setnchannels(1)  # Mono
-        wf.setsampwidth(2)  # 2 Bytes = 16 Bit
-        wf.setframerate(sample_rate)  # sample rate
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(sample_rate)
 
         for sample in signal:
             wf.writeframes(sample.to_bytes(2, 'little', signed=True))
@@ -157,19 +154,23 @@ def bit2audio(bitstring, encoded_audio, sample_rate, bitgroup_duration, freq_rat
         print(f"image successfully encoded to {encoded_audio}")
 
 
-def find_startmarker(signal, sample_rate, startmarker_frequency, startmarker_duration):
-    '''
+def find_startmarker(signal, sample_rate, startmarker_frequency, startmarker_duration, accuracy = 0.01):
+    """
     finds startmarker in signal
+    :param accuracy: accuracy of the start index
     :param signal: array of signal values
     :param sample_rate: sample rate of the signal in Hz
     :param startmarker_frequency: frequency of the startmarker in Hz
     :param startmarker_duration: duration of the startmarker in seconds
     :return: index of the startmarker in the signal, -1 if no startmarker found
-    '''
-    window_samples = int(startmarker_duration * sample_rate)
+    """
+    window_size = int(sample_rate * accuracy)
+    step_size = window_size // 2
 
-    for i in range(0, len(signal) - window_samples, window_samples // 2):
-        segment = signal[i:i + window_samples]
+    start_sample = -1
+
+    for i in range(0, len(signal) - window_size, step_size):
+        segment = signal[i:i + window_size]
 
         fft_result = np.fft.fft(segment)
         freqs = np.fft.fftfreq(len(segment), 1 / sample_rate)
@@ -177,15 +178,17 @@ def find_startmarker(signal, sample_rate, startmarker_frequency, startmarker_dur
 
         dominant_freq = abs(freqs[np.argmax(magnitude)])
 
-        if abs(dominant_freq - startmarker_frequency) <= 10:
-            return i + window_samples  # startindex
+        if (abs(dominant_freq - startmarker_frequency) <= 10) and (dominant_freq > 0):
+            start_sample = int(i + (startmarker_duration * sample_rate))
+            break
 
-    return -1
+    return start_sample
 
 
 def audio2bit(encoded_audio, ft_version ,symbol_duration, sample_rate, freq_rate, startmarker_frequency, startmarker_duration):
-    '''
+    """
     decodes audio (.wav) to bitstring
+    :param ft_version: use numpy-fft(0), fft(1) or dft(2) for frequency analysis.
     :param encoded_audio: path and filename of the encoded audio file
     :param symbol_duration: duration of a symbol in seconds
     :param sample_rate: sample rate of the audio file in Hz
@@ -193,7 +196,7 @@ def audio2bit(encoded_audio, ft_version ,symbol_duration, sample_rate, freq_rate
     :param startmarker_frequency: frequency of the startmarker in Hz
     :param startmarker_duration: duration of the startmarker in seconds
     :return: bitstring of the decoded audio
-    '''
+    """
     frequencies = [500 + i * freq_rate for i in range(16)]
 
     with wave.open(encoded_audio, 'r') as wav_file:
@@ -226,7 +229,6 @@ def audio2bit(encoded_audio, ft_version ,symbol_duration, sample_rate, freq_rate
 
         dominant_frequency = ft.get_frequency(segment, sample_rate, ft_version)
 
-        # round to nearest frequency in frequencies if distance is < 50
         closest = min(frequencies, key=lambda x: abs(x - dominant_frequency))
         if abs(dominant_frequency - closest) < 50:
             dominant_frequency = closest
@@ -237,16 +239,17 @@ def audio2bit(encoded_audio, ft_version ,symbol_duration, sample_rate, freq_rate
             bitstring += format(int(closest/freq_rate) - int(frequencies[0]/freq_rate), '04b')
             print(f"unknown frequency: {dominant_frequency}Hz, using {closest}Hz.")
 
+    print(f"Bitstring successfully decoded from audio {encoded_audio}.")
     return bitstring
 
 
 def bit2img(bitstring, output_image):
-    '''
+    """
     converts bitstring to image
     :param bitstring: has to be formatted as follows: height_bits(16bits) + width_bits(16bits) + color_depth_bits(8bits) + pixel_bits
     :param output_image: path and filename of the output image
     :return: None
-    '''
+    """
     ## check min length
     if len(bitstring) < 40:
         raise ValueError("invalid bitstring length")
@@ -255,6 +258,9 @@ def bit2img(bitstring, output_image):
     height = int(bitstring[:16], 2)
     width = int(bitstring[16:32], 2)
     color_depth = int(bitstring[32:40], 2)
+
+    if (width * height * color_depth + 40 != len(bitstring)):
+        bitstring = bitstring[:(40 + width * height * color_depth)]
 
     if color_depth not in [1, 2, 3, 4, 8]:
         raise ValueError("Error decoding bitstring: color depth must be 1, 2, 3, 4 or 8")

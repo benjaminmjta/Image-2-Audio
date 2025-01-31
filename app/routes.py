@@ -22,7 +22,7 @@ def upload_image():
     file.save(file_path)
 
     image_path = os.path.join('.', 'app', 'static', 'images', filename)
-    ita.resize_img(image_path, 128*128)
+    ita.resize_img(image_path, 64*64)
 
     return render_template(
         'index.html',
