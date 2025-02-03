@@ -18,9 +18,8 @@ def image_to_audio(input_image, output, color_depth = 2, sample_rate = 44100, sy
     :param startmarker_duration: Duration of the startmarker in seconds. Default: 0.3.
     :return: None
     """
-
     bits = img2bit(input_image, color_depth)
-    bit2audio(bits, output, sample_rate, symbol_duration, freq_rate, startmarker_duration, startmarker_frequency)
+    bit2audio_optimized(bits, output, sample_rate, symbol_duration, freq_rate, startmarker_duration, startmarker_frequency)
 
 def audio_to_image(input_audio, output, ft_version = 0, sample_rate = 44100, symbol_duration = 0.01, freq_rate = 100, startmarker_frequency = 2200, startmarker_duration = 0.3):
     """
@@ -54,6 +53,7 @@ def resize_img(input_image, max_size):
         image = image.resize((width, height))
         print(f'Image successfully resized to {width} x {height} pixels.')
         image.save(input_image)
+
 
 def img2bit(input_image, color_depth):
     """
@@ -120,28 +120,32 @@ def bit2audio(bitstring, encoded_audio, sample_rate, bitgroup_duration, freq_rat
     :return: None
     """
     frequencies = [500 + i * freq_rate for i in range(16)]
+    amplitude = 32767
+    samples_per_bitgroup = bitgroup_duration * sample_rate
+    frequency_signals = {}
+    for i in frequencies:
+        frequency_signals[i] = [
+            int(amplitude * math.sin(2 * math.pi * i * t / sample_rate))
+            for t in range(int(samples_per_bitgroup))
+        ]
 
     padding_length = (4 - (len(bitstring) % 4)) % 4
     bitstring += '0' * padding_length
 
     grouped_bits = [bitstring[i:i + 4] for i in range(0, len(bitstring), 4)]
     symbols = [int(bits, 2) for bits in grouped_bits]
-
-    amplitude = 32767
-    samples_per_group = bitgroup_duration * sample_rate
     signal = []
 
-    marker_samples = startmarker_duration * sample_rate
-    marker_frequency = startmarker_frequency
-    for i in range(int(marker_samples)):
-        signal_value = amplitude * math.sin(2 * math.pi * marker_frequency * i / sample_rate)
-        signal.append(int(signal_value))
+    marker_samples = int(startmarker_duration * sample_rate)
+    startmarker_wave = [
+        int(amplitude * math.sin(2 * math.pi * startmarker_frequency * i / sample_rate))
+        for i in range(marker_samples)
+    ]
+    signal.extend(startmarker_wave)
 
     for symbol in symbols:
         frequency = frequencies[symbol]
-        for i in range(int(samples_per_group)):
-            signal_value = amplitude * math.sin(2 * math.pi * frequency * i / sample_rate)
-            signal.append(int(signal_value))
+        signal.extend(frequency_signals[frequency])
 
     with wave.open(encoded_audio, 'wb') as wf:
         wf.setnchannels(1)
@@ -152,6 +156,53 @@ def bit2audio(bitstring, encoded_audio, sample_rate, bitgroup_duration, freq_rat
             wf.writeframes(sample.to_bytes(2, 'little', signed=True))
 
         print(f"image successfully encoded to {encoded_audio}")
+
+
+def bit2audio_optimized(bitstring, encoded_audio, sample_rate, bitgroup_duration, freq_rate, startmarker_duration,
+              startmarker_frequency):
+    """
+    converts bitstring to audio (.wav)
+    :param bitstring: bitstring of the image, has to be formatted as follows: height_bits(16bits) + width_bits(16bits) + color_depth_bits(8bits) + pixel_bits
+    :param encoded_audio: path and filename of the output encoded audio file
+    :param sample_rate: sample rate of the audio file in Hz
+    :param bitgroup_duration: duration of a bitgroup in seconds
+    :param freq_rate: frequency distance between the symbols in Hz
+    :param startmarker_duration: duration of the startmarker in seconds
+    :param startmarker_frequency: frequency of the startmarker in Hz
+    :return: None
+    """
+    frequencies = np.array([500 + i * freq_rate for i in range(16)], dtype=np.float32)
+    amplitude = 32767
+    samples_per_bitgroup = int(bitgroup_duration * sample_rate)
+
+    time_values = np.arange(samples_per_bitgroup) / sample_rate
+    frequency_signals = {
+        freq: (amplitude * np.sin(2 * np.pi * freq * time_values)).astype(np.int16)
+        for freq in frequencies
+    }
+
+    padding_length = (4 - (len(bitstring) % 4)) % 4
+    bitstring += '0' * padding_length
+
+    symbols = np.array([int(bitstring[i:i + 4], 2) for i in range(0, len(bitstring), 4)], dtype=np.uint8)
+    selected_frequencies = frequencies[symbols]
+
+    signal = np.empty(0, dtype = np.int16)
+
+    marker_samples = int(startmarker_duration * sample_rate)
+    startmarker_wave = (amplitude * np.sin(2 * np.pi * startmarker_frequency * np.arange(marker_samples) / sample_rate)).astype(np.int16)
+    signal = np.append(signal, startmarker_wave)
+
+    for freq in selected_frequencies:
+        signal = np.append(signal, frequency_signals[freq])
+
+    with wave.open(encoded_audio, 'wb') as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(sample_rate)
+        wf.writeframes(signal.tobytes())
+
+    print(f"Image successfully encoded to {encoded_audio}")
 
 
 def find_startmarker(signal, sample_rate, startmarker_frequency, startmarker_duration, accuracy = 0.01):
