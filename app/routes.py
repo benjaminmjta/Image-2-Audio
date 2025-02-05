@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request, send_file, url_for, jsoni
 import os
 from logic import image_to_audio as ita
 import subprocess
+from logic import vars as v
 
 main = Blueprint('main', __name__)
 
@@ -22,12 +23,14 @@ def upload_image():
     file.save(file_path)
 
     image_path = os.path.join('.', 'app', 'static', 'images', filename)
-    ita.resize_img(image_path, 64*64)
+    width, height = ita.resize_img(image_path, v.image_max_size)
 
     return render_template(
         'index.html',
         uploaded_image = url_for('static', filename= os.path.join('images', filename)),
-        image_name = filename
+        image_name = filename,
+        image_width = width,
+        image_height = height
     )
 
 @main.route('/convert_to_audio', methods=['POST'])
@@ -87,7 +90,7 @@ def save_audio():
 
     try:
         audio.save(webm_path)
-        command = ['ffmpeg', '-i', webm_path, '-ar', '44100', '-ac', '1', '-sample_fmt', 's16', filepath]
+        command = ['ffmpeg', '-i', webm_path, '-ar', f'{v.audio_sample_rate}', '-ac', f'{v.audio_channels}', '-sample_fmt', f's{v.audio_bit_depth}', filepath]
         subprocess.run(command, check=True)
         os.remove(webm_path)
         return jsonify(success = True, filename = filename)
@@ -108,16 +111,22 @@ def recorded_audio():
 def recover_image():
     audio_name = request.form['audio_name']
     ft_version = int(request.form.get('ft_version', 0))
+    width = int(request.form.get('width', 16))
+    height = int(request.form.get('height', 16))
+    color_depth = int(request.form.get('color_depth', 1))
     audio_path = os.path.join('.', 'app', 'static', 'audios', audio_name)
 
     if not os.path.exists(audio_path):
         return 'audio not found', 404
 
+    if color_depth > 4:
+        color_depth = 8
+
     image_name = os.path.splitext(audio_name)[0] + '_recovered.png'
     image_path = os.path.join('.', 'app', 'static', 'images', image_name)
 
     try:
-        ita.audio_to_image(audio_path, image_path, ft_version)
+        ita.audio_to_image(audio_path, image_path, width, height, color_depth, ft_version)
 
         return render_template(
             'index.html',

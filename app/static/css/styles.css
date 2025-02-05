@@ -108,6 +108,22 @@ input[type="number"]:focus {
     color: var(--secondary-color);
 }
 
+.input_grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+    gap: var(--primary-grid-gap);
+    align-items: center;
+    justify-content: center;
+    margin: var(--primary-margin);
+}
+
+.form_group{
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
 .image {
     border-radius: var(--primary-border-radius);
     overflow: hidden;
@@ -223,6 +239,11 @@ form{
     justify-content: space-between;
     align-items: center;
     width: 100%;
+    gap: var(--primary-grid-gap);
+}
+
+.form_line.left{
+    justify-content: flex-start;
 }
 
 .form_label{
