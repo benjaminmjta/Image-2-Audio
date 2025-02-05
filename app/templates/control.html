@@ -1,0 +1,81 @@
+<div class="card control">
+
+    <div class='card_title'>
+      <label>{{font_awesome.render_icon("fa-solid fa-sliders")}}</label><label>control</label>
+    </div>
+
+    <div class='card_content'>
+
+        <form action="/upload_image" method="post" enctype="multipart/form-data" onsubmit="showLoading()">
+            <label class="form_label">upload new image</label>
+            <label for="image_select" class="input_label">too high resolutions will be resized.</label>
+            <input id="image_select" type="file" name="file" accept="image/*" required>
+            <button type="submit">{{font_awesome.render_icon("fa-solid fa-upload")}} upload</button>
+        </form>
+
+        {% if uploaded_image %}
+            <form action="/convert_to_audio" method="post" onsubmit="showLoading()">
+                <label class="form_label">convert image to audio</label>
+                <label for="color_depth_sl" class="input_label">color depth:</label>
+                <div class="form_line">
+                    <input type="range" id="color_depth_sl" name="color_depth" min="1" max="5" value="1" oninput="ColorDepthControl()"/>
+                    <span id="color_depth_label" for="color_depth_sl">1 Bit</span>
+                </div>
+                <span class="form-alert" id="color_depth_alert"></span>
+                <button type="button" id="color_switch">converting in grayscale</button>
+                <input id="" type="hidden" name="image_name" value="{{ image_name }}">
+                <button type="submit">{{font_awesome.render_icon("fa-solid fa-gears")}} convert</button>
+            </form>
+        {% endif %}
+
+        <form action="/upload_audio" method="post" enctype="multipart/form-data" onsubmit="showLoading()">
+            <label class="form_label">upload new audio</label>
+            <input id="audio_select" type="file" name="file" accept=".wav" required>
+            <button type="submit">{{font_awesome.render_icon("fa-solid fa-upload")}} upload</button>
+        </form>
+
+        <div class="control_group">
+            <label class="form_label">or record audio</label>
+            <div class="form_line">
+                <select id="microphone_select">
+                    <option value="default">default</option>
+                </select>
+                <div class="record_buttons">
+                    <button id="record_button">{{font_awesome.render_icon("fa-solid fa-play")}}</button>
+                    <button id="stop_button">{{font_awesome.render_icon("fa-solid fa-stop")}}</button>
+                </div>
+            </div>
+        </div>
+
+        {% if uploaded_audio %}
+            <form action="/recover_image" method="post" onsubmit="showLoading()">
+                <label class="form_label">recover image from audio</label>
+                <input type="hidden" name="audio_name" value="{{ audio_name }}">
+                <div class="form_line left">
+                    <div class="form_group">
+                        <label class="input_label">width:</label>
+                        <input type="number" name="width" min="1" max="1024" value="16" required/>
+                    </div>
+                    <div class="form_group">
+                        <label class="input_label">height:</label>
+                        <input type="number" name="height" min="1" max="1024" value="16" required/>
+                    </div>
+                </div>
+                <label for="color_depth_sl" class="input_label">color depth:</label>
+                <div class="form_line left">
+                    <input type="range" id="color_depth_sl" name="color_depth" min="1" max="5" value="1" oninput="ColorDepthControl()" required/>
+                    <span id="color_depth_label" for="color_depth_sl">1 Bit</span>
+                </div>
+                <span class="form-alert" id="color_depth_alert"></span>
+                <button type="button" id="color_switch">converting in grayscale</button>
+                <div class="form_line">
+                    <label class="input_label">numpy fft</label>
+                    <input id="ft_checkbox" type="checkbox" name="ft_version" class="slider-checkbox" value="1"/>
+                    <label for="ft_checkbox" class="slider"></label>
+                    <label class="input_label">manual fft</label>
+                </div>
+                <button type="submit">{{font_awesome.render_icon("fa-solid fa-gears")}} recover</button>
+            </form>
+        {% endif %}
+    </div>
+</div>

@@ -1,0 +1,63 @@
+
+<div class = 'card up_img'>
+    <div class='card_title'>
+        <label>{{font_awesome.render_icon("fa-solid fa-file-image")}}</label><label>uploaded image</label>
+        {% if image_width, image_height %}
+                <label>(w:{{ image_width }}px x h:{{ image_height }}px)</label>
+        {% endif %}
+    </div>
+    <div class='card_content'>
+        {% if uploaded_image %}
+            <img src="{{ uploaded_image }}" alt="uploaded image" class="image">
+        {% else %}
+            <p>no image uploaded</p>
+        {% endif %}
+    </div>
+</div>
+
+{% if audio_file %}
+    <div class='card gen_aud'>
+        <div class='card_title'>
+            <label>{{font_awesome.render_icon("fa-solid fa-file-audio")}}</label><label>generated audio</label>
+        </div>
+        <div class='card_content'>
+            <audio controls>
+                <source src="{{ audio_file }}" type="audio/wav">
+                browser does not support this audio file.
+            </audio>
+        </div>
+        <div class='card_footer'>
+            <a href="{{ audio_file }}">download audio</a>
+        </div>
+    </div>
+{% endif %}
+
+<div class = 'card up_aud'>
+    <div class='card_title'>
+        <label>{{font_awesome.render_icon("fa-solid fa-file-audio")}}</label><label>uploaded audio</label>
+    </div>
+    <div class='card_content'>
+        {% if uploaded_audio %}
+            <audio controls>
+                <source src="{{ uploaded_audio }}" type="audio/wav">
+                browser does not support this audio file.
+            </audio>
+        {% else %}
+            <p>no audio uploaded</p>
+        {% endif %}
+    </div>
+</div>
+
+{% if recovered_image %}
+    <div class='card rec_img'>
+        <div class='card_title'>
+            <label>{{font_awesome.render_icon("fa-solid fa-file-image")}}</label><label>recovered image</label>
+        </div>
+        <div class='card_content'>
+            <img src="{{ recovered_image }}" alt="recovered image" class="image">
+        </div>
+        <div class='card_footer'>
+            <a href="{{ recovered_image }}" download>download image</a>
+        </div>
+    </div>
+{% endif %}
