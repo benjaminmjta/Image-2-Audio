@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import math
 
@@ -74,6 +75,8 @@ def dft(signal):
     :param signal: array of signal values
     :return: array of complex values
     '''
+    start_time = time.time()
+
     N = len(signal)
     result = []
     for k in range(N):
@@ -84,14 +87,18 @@ def dft(signal):
             r += signal[n] * np.cos(angle)
             i -= signal[n] * np.sin(angle)
         result.append(complex(r, i))
+
+    end_time = time.time()
+    print("symbol time cost:", end_time - start_time)
+
     return np.array(result)
 
 
 def fft(signal):
     '''
     fast fourier transform on signal
-    :param signal: dataarray of signal values
-    :return: dataarray of complex values
+    :param signal: array of signal values
+    :return: array of complex values
     '''
     n = len(signal)
 
@@ -103,15 +110,15 @@ def fft(signal):
 
     T = [math.e**(-2j * math.pi * k/n) * odd[k] for k in range(n//2)]
     return [even[k] + T[k] for k in range(n//2)] + \
-           [even[k] - T[k] for k in range(n // 2)]
+           [even[k] - T[k] for k in range(n//2)]
 
 
-def get_frequency(signal, sample_rate, ft_version):
+def get_dominant_frequency(signal, sample_rate, ft_version):
     '''
     calculates the dominant frequency of a signal
-    :param signal: data array of signal values
+    :param signal: array of signal values
     :param sample_rate: sample rate of the signal in Hz
-    :param ft_version: use numpy-fft(2), fft(1) or dft(0)
+    :param ft_version: use numpy-fft(2) or fft(1)
     :return: dominant frequency in Hz
     '''
     match ft_version:

@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import wave
+import time
 from PIL import Image
 from logic import fourier_transform as ft
 from logic import vars as v
@@ -261,10 +262,11 @@ def audio2bit(encoded_audio, ft_version):
 
     bitstring = ""
 
+    start_time = time.time()
     for i in range(start_index, len(signal), samples_per_symbol):
         segment = signal[i:i + samples_per_symbol]
 
-        dominant_frequency = ft.get_frequency(segment, v.audio_sample_rate, ft_version)
+        dominant_frequency = ft.get_dominant_frequency(segment, v.audio_sample_rate, ft_version)
         closest = min(frequencies, key=lambda x: abs(x - dominant_frequency))
 
         if closest == frequencies[16]:
@@ -280,7 +282,9 @@ def audio2bit(encoded_audio, ft_version):
             bitstring += format(int(closest/v.audio_symbol_frequency_distance) - int(frequencies[0]/v.audio_symbol_frequency_distance), '04b')
             print(f"unknown frequency: {dominant_frequency}Hz, using {closest}Hz.")
 
-    print(f"Bitstring successfully decoded from audio {encoded_audio}.")
+    end_time = time.time()
+    print(f"Bitstring successfully decoded from audio {encoded_audio} in {end_time - start_time} seconds.")
+
     return bitstring
 
 

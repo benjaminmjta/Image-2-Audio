@@ -5,6 +5,10 @@
     font-style: normal;
 }
 
+#microphone_select{
+    max-width: 8rem;
+}
+
 :root {
     --primary-margin: .5rem;
     --primary-padding: .5rem;
