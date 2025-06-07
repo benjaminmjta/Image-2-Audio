@@ -1,13 +1,50 @@
-# image-over-sound: send images over sound
+# Image Over Audio
 
-Python app to send images with audio signals. The image pixel data gets translated into a bitstring and converted to a .wav audio file. 4 bits together are represented by 1 unique frequency.
+This Python application allows you to encode images into audio signals and recover images from audio files. The image pixel data is translated into a bitstring and converted to a .wav audio file, where each group of bits is represented by a unique frequency.
 
----
+## Features
 
-## 🚀 functions
+- Upload an image and convert it to a .wav audio file
+- Upload or record an audio file and recover the encoded image
+- Adjustable color depth and image size
+- Supports both grayscale and color images
+- Web interface built with Flask
 
-1. select an image and convert it to a .wav audio file
+## Installation
 
-2. select an audio file and recover the image in it
+1. Clone the repository:
 
----
+   ```
+   git clone https://github.com/benjaminmjta/ImageToAudio.git
+   cd ImageToAudio
+   ```
+
+2. Install the dependencies:
+
+   ```
+   pip install -r requirements.txt
+   ```
+
+3. Run the application:
+
+   ```
+   python app.py
+   ```
+
+4. Open your browser and go to `http://localhost:8000`
+
+## Usage
+
+- Use the web interface to upload an image and convert it to audio.
+- Upload or record an audio file to recover the image.
+- Adjust color depth and other parameters as needed.
+
+## Project Structure
+
+- `app` - Flask application and web interface
+- `logic` - Core logic for image/audio conversion
+- `TestImages` and `TestAudios` - Example files for testing
+
+## License
+
+This project is provided for educational purposes. See the repository for license details.
