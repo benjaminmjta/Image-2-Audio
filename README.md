@@ -39,12 +39,3 @@ This Python application allows you to encode images into audio signals and recov
 - Upload or record an audio file to recover the image.
 - Adjust color depth and other parameters as needed.
 
-## Project Structure
-
-- `app` - Flask application and web interface
-- `logic` - Core logic for image/audio conversion
-- `TestImages` and `TestAudios` - Example files for testing
-
-## License
-
-This project is provided for educational purposes. See the repository for license details.
