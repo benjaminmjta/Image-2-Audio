@@ -39,5 +39,5 @@ This Python application allows you to encode images into audio files and recover
 
 - Use the web interface to upload an image and convert it to audio.
 - Upload or record an audio file to recover the image.
-- Adjust color depth and other parameters as needed.
+- Adjust color depth and other parameters as needed. The decode params have to match the encode params.
 
