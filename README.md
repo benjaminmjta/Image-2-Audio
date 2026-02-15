@@ -1,3 +1,5 @@
+This project was part of a graded assessment in my studies. For more details see: [Belegarbeit](Documentation/Belegarbeit_Img2Audio_Benjamin_M.pdf)
+
 # Image Over Audio
 
 This Python application allows you to encode images into audio files and recover images from audio files or recordings. The image pixel data is translated into a bitstring and converted to a .wav audio file, where each group of 4 bits is represented by a unique frequency.
